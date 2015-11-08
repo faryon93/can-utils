@@ -45,6 +45,7 @@ GNUmakefile.in
 /slcan_attach
 /slcand
 /slcanpty
+/sdosend
 
 /can-utils-*.tar.bz2
 /can-utils-*.tar.gz

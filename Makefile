@@ -95,3 +95,4 @@ log2long:	log2long.o	lib.o
 log2asc:	log2asc.o	lib.o
 asc2log:	asc2log.o	lib.o
 canbusload:	canbusload.o	canframelen.o
+sdosend:	sdosend.o
