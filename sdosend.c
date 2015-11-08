@@ -196,6 +196,9 @@ int main(int argc, char **argv)
 	struct sockaddr_can addr;
 	struct ifreq ifr;
 	struct can_frame request, response;
+	fd_set set;
+  	struct timeval timeout;
+  	int rv;
 
 	/* check command line options */
 	if (argc != 4) {
@@ -238,19 +241,41 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	/* receive the sdo resonse */
-	// TODO: timeout
-	if (read(s, &response, sizeof(response)) != sizeof(response)) {
-		perror("read");
-		return 1;
-	}
+	/* timed wait for the response */
+	FD_ZERO(&set);
+	FD_SET(s, &set);
+
+	timeout.tv_sec = 0;
+  	timeout.tv_usec = 200000;
 
 	/* wait for the right resposne canframe */
-	// TODO: timeout
 	while (response.can_id != (SDO_RESP_OFFSET + nodeid) &&
 	       *((uint16_t*)&response.data[1]) != index &&
 	       *((uint16_t*)&response.data[3]) != subindex)
-		;
+	{
+		/* timeout exeeceded -> exit */
+		if (timeout.tv_sec == 0 && timeout.tv_usec == 0)
+		{
+			fprintf(stderr, "request exeeded the timout\n");
+			return -1;
+		}
+
+		rv = select(s + 1, &set, NULL, NULL, &timeout);
+		if(rv == -1) {
+			perror("select"); /* an error accured */
+			return -1;
+
+		} else if(rv == 0) { /* timeout occoured */
+			fprintf(stderr, "request exeeded the timout\n");
+			return -1;
+
+		} else {	/* a new canframe is available -> read resposne */
+			if (read(s, &response, sizeof(response)) != sizeof(response)) {
+				perror("read");
+				return 1;
+			}
+		}
+	}
 
 	uint32_t payload = *((uint32_t*)&response.data[4]);
 
