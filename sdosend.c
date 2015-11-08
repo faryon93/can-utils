@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 	if (!parse_sdo(argv[2], argv[3], &request, &nodeid, &index, &subindex))
 	{
 		fprintf(stderr, "Wrong CAN-frame format!\n");
-		return -1;
+		return 1;
 	}
 
 	/* open socket */
@@ -257,17 +257,17 @@ int main(int argc, char **argv)
 		if (timeout.tv_sec == 0 && timeout.tv_usec == 0)
 		{
 			fprintf(stderr, "request exeeded the timout\n");
-			return -1;
+			return 1;
 		}
 
 		rv = select(s + 1, &set, NULL, NULL, &timeout);
 		if(rv == -1) {
 			perror("select"); /* an error accured */
-			return -1;
+			return 1;
 
 		} else if(rv == 0) { /* timeout occoured */
 			fprintf(stderr, "request exeeded the timout\n");
-			return -1;
+			return 1;
 
 		} else {	/* a new canframe is available -> read resposne */
 			if (read(s, &response, sizeof(response)) != sizeof(response)) {
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 	/* uuuupps an sdo error occoured */
 	if (response.data[0] == SDO_ERROR) {
 		fprintf(stderr, "error while executing request: %s\n", sdo_error(payload));
-		return -1;
+		return 1;
 
 	/* everything is file, display the results */
 	} else {
